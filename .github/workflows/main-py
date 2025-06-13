@@ -1,30 +1,58 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from typing import Optional
+import random
 
 app = FastAPI()
 
-class MentalHealthEntry(BaseModel):
+# User profile model
+class UserProfile(BaseModel):
     username: str
-    anxiety_level: int
-    stress_level: int
-    sleep_hours: float
+    interests: list[str]
+    love_language: str  # e.g., "words", "touch", "gifts", "time", "service"
+    personality: str    # e.g., "INTJ", "ENFP"
+    message_style: Optional[str] = "neutral"
+
+# Simulated database of users
+mock_user_db = [
+    {
+        "username": "luna_ai",
+        "interests": ["neuroscience", "machine learning", "gardening"],
+        "love_language": "words",
+        "personality": "INFJ",
+        "message_style": "warm"
+    },
+    {
+        "username": "neuronova",
+        "interests": ["robotics", "gaming", "poetry"],
+        "love_language": "time",
+        "personality": "ENTP",
+        "message_style": "funny"
+    }
+]
 
 @app.get("/")
-def read_root():
-    return {"message": "Welcome to the eSaha Mental Health API"}
+def root():
+    return {"message": "Welcome to AILove — Where hearts meet algorithms ❤️🤖"}
 
-@app.post("/assess")
-def assess(entry: MentalHealthEntry):
-    total_score = entry.anxiety_level + entry.stress_level
+@app.post("/match")
+def find_match(user: UserProfile):
+    # Naive matching: find a user with at least one shared interest or same love language
+    for candidate in mock_user_db:
+        if user.love_language == candidate["love_language"] or \
+           any(i in candidate["interests"] for i in user.interests):
+            return {"match": candidate["username"], "message_style": candidate["message_style"]}
+    return {"match": None, "message": "No match found yet. Please try again later!"}
 
-    recommendation = "You seem to be doing well. Keep it up!"
-    if total_score > 12 or entry.sleep_hours < 6:
-        recommendation = "Consider reaching out for support or improving sleep habits."
-
+@app.post("/simulate_convo")
+def simulate_conversation(user: UserProfile):
+    responses = {
+        "warm": "Hi! It's so lovely to talk with you. I'm really into thoughtful conversations. 😊",
+        "funny": "Hey hey! Are you made of copper and tellurium? Because you're Cu-Te 😄",
+        "neutral": "Hello. I'm excited to learn more about you."
+    }
+    response = responses.get(user.message_style, responses["neutral"])
     return {
-        "user": entry.username,
-        "anxiety": entry.anxiety_level,
-        "stress": entry.stress_level,
-        "sleep_hours": entry.sleep_hours,
-        "recommendation": recommendation
+        "simulated_partner_response": response,
+        "note": "This is a mock conversation to help you feel more confident."
     }
